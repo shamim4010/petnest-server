@@ -41,16 +41,28 @@ async function run() {
         res.send(results);
     })
 
+    app.post('/pets', async(req, res) => {
+      const listPets = req.body
+      const results = await petss.insertOne(listPets).toArray();
+      res.json(results);
+    })
+
     app.get('/orders/:userId', async(req, res) => {
       const {userId} = req.params
       const results = await petsOrder.find({ userId: userId }).toArray();
-      res.json(results)
+      res.json(results);
     })
 
     app.post('/orders', async(req, res) => {
       const orderPets = req.body
       const result = await petsOrder.insertOne(orderPets).toArray()
       res.json(result);
+    })
+
+    app.delete('/orders/:orderId', async(req, res) => {
+      const {orderId} = req.params;
+      const result = await petsOrder.deleteOne({_id: new ObjectId(orderId)})
+      res.json(result)
     })
 
   } finally {
