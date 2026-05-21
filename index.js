@@ -41,6 +41,12 @@ async function run() {
         res.send(results);
     })
 
+    app.get('/pets/:userId', async(req, res) => {
+      const {userId} = req.params
+      const results = await petss.find({ userId: userId }).toArray();
+      res.json(results);
+    })
+
     app.post('/pets', async(req, res) => {
       const listPets = req.body
       const results = await petss.insertOne(listPets).toArray();
