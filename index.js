@@ -1,14 +1,15 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion} = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 dotenv.config();
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-const uri  = process.env.MONGODB_URI;
+const uri = process.env.MONGODB_URI;
 const PORT = process.env.PORT
 
 const client = new MongoClient(uri, {
@@ -19,6 +20,29 @@ const client = new MongoClient(uri, {
   }
 });
 
+const JWKS = createRemoteJWKSet(
+  new URL('http://localhost:3000/api/auth/jwks')
+)
+
+const verifyUser = async(req, res, next) => {
+  const header = req?.headers.authorization
+  console.log(header)
+  if (!header) {
+    res.status(401).json({ message: 'Unauthorized' })
+  }
+  const token = header.split(' ')[1]
+  if (!token) {
+    res.status(401).json({ message: 'Unauthorized' })
+  }
+
+  try{
+    const { payload } = await jwtVerify(token, JWKS)
+    next()
+  } catch(error) {
+    return res.status(403).json({ message: 'Forbidden' })
+  }
+}
+
 async function run() {
   try {
     await client.connect();
@@ -28,46 +52,46 @@ async function run() {
     const petss = db.collection('pets');
     const petsOrder = db.collection('orders');
 
-    app.get('/pets', async(req, res) => {
+    app.get('/pets', async (req, res) => {
       const cursor = petss.find();
       const results = await cursor.toArray();
       res.send(results);
     })
 
-    app.get('/pets/:id', async(req, res) =>{
-        const id = parseInt(req.params.id);
-        const query = {id : id};
-        const results = await petss.findOne(query);
-        res.send(results);
+    app.get('/pets/:id', verifyUser, async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      const results = await petss.findOne(query);
+      res.send(results);
     })
 
-    app.get('/pets/:userId', async(req, res) => {
-      const {userId} = req.params
-      const results = await petss.find({ userId: userId }).toArray();
-      res.json(results);
-    })
-
-    app.post('/pets', async(req, res) => {
+    app.post('/pets', async (req, res) => {
       const listPets = req.body
       const results = await petss.insertOne(listPets).toArray();
       res.json(results);
     })
 
-    app.get('/orders/:userId', async(req, res) => {
-      const {userId} = req.params
+    app.delete('/pets/:userId', async (req, res) => {
+      const { userId } = req.params
+      const results = await petss.deleteOne({ userId: userId }).toArray();
+      res.json(results);
+    })
+
+    app.get('/orders/:userId', async (req, res) => {
+      const { userId } = req.params
       const results = await petsOrder.find({ userId: userId }).toArray();
       res.json(results);
     })
 
-    app.post('/orders', async(req, res) => {
+    app.post('/orders', async (req, res) => {
       const orderPets = req.body
-      const result = await petsOrder.insertOne(orderPets).toArray()
+      const result = await petsOrder.insertOne(orderPets).toArray();
       res.json(result);
     })
 
-    app.delete('/orders/:orderId', async(req, res) => {
-      const {orderId} = req.params;
-      const result = await petsOrder.deleteOne({_id: new ObjectId(orderId)})
+    app.delete('/orders/:orderId', async (req, res) => {
+      const { orderId } = req.params;
+      const result = await petsOrder.deleteOne({ _id: new ObjectId(orderId) }).toArray();
       res.json(result)
     })
 
@@ -77,10 +101,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.get('/',(req, res) => {
-      res.send("Hello world");
+app.get('/', (req, res) => {
+  res.send("Hello world");
 })
 
 app.listen(PORT, () => {
-    console.log('shamim islam')
+  console.log('shamim islam')
 })
