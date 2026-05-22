@@ -24,7 +24,7 @@ const JWKS = createRemoteJWKSet(
   new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
 )
 
-const verifyUser = async(req, res, next) => {
+const verifyUser = async (req, res, next) => {
   const header = req?.headers.authorization
   console.log(header)
   if (!header) {
@@ -35,10 +35,10 @@ const verifyUser = async(req, res, next) => {
     res.status(401).json({ message: 'Unauthorized' })
   }
 
-  try{
+  try {
     const { payload } = await jwtVerify(token, JWKS)
     next()
-  } catch(error) {
+  } catch (error) {
     return res.status(403).json({ message: 'Forbidden' })
   }
 }
@@ -59,7 +59,7 @@ async function run() {
     })
 
     app.get('/pets/:id', async (req, res) => {
-      const { id } = req.params;
+      const { id } = req.params
       const query = { _id: new ObjectId(id) };
       const results = await petss.findOne(query);
       res.send(results);
@@ -69,6 +69,16 @@ async function run() {
       const listPets = req.body
       const results = await petss.insertOne(listPets).toArray();
       res.json(results);
+    })
+
+    app.patch('/pets/:id', async (req, res) => {
+      const { id } = req.params
+      const updatePetData = req.body
+
+      const result = petss.updateOne(
+        {_id: new ObjectId(id)},{$set: updatePetData}
+      )
+      res.json(result);
     })
 
     app.delete('/pets/:userId', verifyUser, async (req, res) => {
