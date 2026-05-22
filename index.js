@@ -21,7 +21,7 @@ const client = new MongoClient(uri, {
 });
 
 const JWKS = createRemoteJWKSet(
-  new URL('http://localhost:3000/api/auth/jwks')
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
 )
 
 const verifyUser = async(req, res, next) => {
@@ -45,8 +45,8 @@ const verifyUser = async(req, res, next) => {
 
 async function run() {
   try {
-    await client.connect();
-    await client.db("admin").command({ ping: 1 });
+    /* await client.connect(); */
+    /* await client.db("admin").command({ ping: 1 }); */
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
     const db = client.db('PetNest');
     const petss = db.collection('pets');
@@ -65,7 +65,7 @@ async function run() {
       res.send(results);
     })
 
-    app.post('/pets', async (req, res) => {
+    app.post('/pets', verifyUser, async (req, res) => {
       const listPets = req.body
       const results = await petss.insertOne(listPets).toArray();
       res.json(results);
@@ -77,13 +77,13 @@ async function run() {
       res.json(results);
     })
 
-    app.get('/orders/:userId', async (req, res) => {
+    app.get('/orders/:userId', verifyUser, async (req, res) => {
       const { userId } = req.params
       const results = await petsOrder.find({ userId: userId }).toArray();
       res.json(results);
     })
 
-    app.post('/orders', async (req, res) => {
+    app.post('/orders', verifyUser, async (req, res) => {
       const orderPets = req.body
       const result = await petsOrder.insertOne(orderPets).toArray();
       res.json(result);
