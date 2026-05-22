@@ -75,7 +75,7 @@ async function run() {
       const { id } = req.params
       const updatePetData = req.body
 
-      const result = petss.updateOne(
+      const result = await petss.updateOne(
         {_id: new ObjectId(id)},{$set: updatePetData}
       )
       res.json(result);
