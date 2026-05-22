@@ -52,7 +52,7 @@ async function run() {
     const petss = db.collection('pets');
     const petsOrder = db.collection('orders');
 
-    app.get('/pets', async (req, res) => {
+    app.get('/pets', verifyUser, async (req, res) => {
       const cursor = petss.find();
       const results = await cursor.toArray();
       res.send(results);
