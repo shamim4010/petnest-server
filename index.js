@@ -77,19 +77,19 @@ async function run() {
       res.json(results);
     })
 
-    app.get('/orders/:userId', async (req, res) => {
+    app.get('/orders/:userId', verifyUser, async (req, res) => {
       const { userId } = req.params
       const results = await petsOrder.find({ userId: userId }).toArray();
       res.json(results);
     })
 
-    app.post('/orders', async (req, res) => {
+    app.post('/orders', verifyUser, async (req, res) => {
       const orderPets = req.body
       const result = await petsOrder.insertOne(orderPets).toArray();
       res.json(result);
     })
 
-    app.delete('/orders/:orderId', async (req, res) => {
+    app.delete('/orders/:orderId', verifyUser, async (req, res) => {
       const { orderId } = req.params;
       const result = await petsOrder.deleteOne({ _id: new ObjectId(orderId) }).toArray();
       res.json(result)
