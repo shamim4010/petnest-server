@@ -52,7 +52,7 @@ async function run() {
     const petss = db.collection('pets');
     const petsOrder = db.collection('orders');
 
-    app.get('/pets', async (req, res) => {
+    app.get('/pets', verifyUser, async (req, res) => {
       const cursor = petss.find();
       const results = await cursor.toArray();
       res.send(results);
@@ -71,7 +71,7 @@ async function run() {
       res.json(results);
     })
 
-    app.delete('/pets/:userId', async (req, res) => {
+    app.delete('/pets/:userId', verifyUser, async (req, res) => {
       const { userId } = req.params
       const results = await petss.deleteOne({ userId: userId }).toArray();
       res.json(results);
@@ -89,7 +89,7 @@ async function run() {
       res.json(result);
     })
 
-    app.delete('/orders/:orderId', async (req, res) => {
+    app.delete('/orders/:orderId', verifyUser, async (req, res) => {
       const { orderId } = req.params;
       const result = await petsOrder.deleteOne({ _id: new ObjectId(orderId) }).toArray();
       res.json(result)
